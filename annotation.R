@@ -15,7 +15,8 @@ load("data.rda")
 # retrieve IPI-HGNC relations for genes profiled at the protein level 
 symbol.start = as.numeric(sapply(prot$Fasta.headers, function(x)(regexpr("Gene_Symbol",x)[1])))
 ss = substr(prot$Fasta.headers[symbol.start != -1], start=symbol.start[symbol.start != -1], stop=1000000L)
-symbol = gsub("Gene_Symbol=","",as.vector(sapply(ss, function(x)(strsplit(x," ")[[1]][1]))))
+tmp = gsub("Gene_Symbol=","",as.vector(sapply(ss, function(x)(strsplit(x," ")[[1]][1]))))
+symbol = as.vector(sapply(tmp, function(x)(strsplit(x,";")[[1]][1])))
 zrs = rep(0,length(symbol))
 ipiHgncProt = data.frame(IPI=zrs,HGNC.symbol=zrs)
 ipiHgncProt[,1] = prot$Accession[symbol.start != -1]
