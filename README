@@ -5,11 +5,16 @@ General purpose is to model translational control of gene expression in the NCI6
 profile gene expression at mRNA and protein levels. Translational control is expected to
 uncouple mRNA from protein levels.
 
-
-'data.rda' contains initial data: 'biomart' has Ensembl BioMart v75 genomic coordinates and 'rna' has NCI60 RNA processed data. 
+---------------
+'data' branch:
+---------------
+'data.rda' contains initial data: 'biomart' has Ensembl BioMart v75 genomic coordinates , 'rna' and 'prot' has NCI60 RNA and protein  processed data. 
 'annotation.rda' contains the assignment of genomic coordinates to genes profiled in NCI60 either by RNA or protein level.
 'gRanges.rna.rda' contains genomic ranges for NCI60 RNA processed data.
 
+--------------
+'master':
+--------------
 'annotation.R' returns 'annotation.rda'
 'gRanges.rna.R' returns 'gRanges.rna.rda'
-
+'gRanges.prot.R' returns 'gRanges.prot.rda'
