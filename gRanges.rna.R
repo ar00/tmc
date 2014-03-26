@@ -41,11 +41,11 @@ expr = expr[order(rownames(expr)),]
 
 
 # define genomic ranges
-gr = GRanges(seqnames = annotation$Chromosome.Name,ranges = IRanges(start=annotation$Gene.Start..bp.,
+gr.rna = GRanges(seqnames = annotation$Chromosome.Name,ranges = IRanges(start=annotation$Gene.Start..bp.,
  end = annotation$Gene.End..bp., names = annotation$ID),strand = annotation$Strand,
   HGNC.symbol = annotation$HGNC.symbol, expr)
 
-save(gr,file="gRanges.rna.rda")
+save(gr.rna,file="gRanges.rna.rda")
 
 
 
