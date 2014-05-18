@@ -18,7 +18,7 @@ R-script: nci60data.R
 aim: save the initial data from NCI60 and basic Ensembl annotation 
      in to an R session
 out: ../data/data.rda
-
+notes: you can't run this script because original files are too big for GitHub
 
 R-script: annotation.R
 aim: get genomic ccordinates for genes profiled at
@@ -44,7 +44,7 @@ aim: report RBP-target interactions as 1 (>=1 binding site in
      either 5' or 3'UTR of the gene) or 0 (otherwise). The input file 
      contains RBP binding sites with FIMO-returned q-value < .20
 out: ../data/rbp.target.binary.txt
-
+note: you can't run thsi script as it uses a file too big for GitHub.
 
 R-script: nci60rbp.R
 aim: 
