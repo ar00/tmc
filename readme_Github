@@ -65,14 +65,32 @@ aim: compare extra-samples prediction error by
 out: ../results/rcv.summary.txt
 
 
+R-script: rcv.ridge.R
+aim: compare extra-samples prediction error by
+     repeated (R=10) K-fold (K=5) cross-validation (RCV).
+     Here M1 linear models are fitted with elastic-net regularization (alpha=0).
+     We use the cv.glmnet() function in glmnet (nfolds=3).
+out: ../results/rcv.summary.txt
+
+
+
 R-script: fit_functions.R
 aim: functions used to generate and assess models of translation control
      in the mRNA/protein NCI60 dataset
-out: 
+out: N/A 
+
+
 
 R-script: rcv.out.plot.R
 aim: plot histograms of relative prediction error perfoirmances
 out: ../results/rcv.out.pdf
+
+
+R-script: rcv.out.plot.ridge.R
+aim: plot histograms of relative prediction error performances and
+ histograms of parameters related to the cross-validation for tuneling 
+ M1 model coefficients.
+out: ../results/rcv.out.ridge.penalty.pdf
 
 
 R-script: model.diagnostic.R
