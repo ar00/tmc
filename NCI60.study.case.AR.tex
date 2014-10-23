@@ -1,0 +1,232 @@
+%% LyX 2.0.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage[sc]{mathpazo}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+ {hyperref}
+\hypersetup{
+ pdfstartview={XYZ null null 1}}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+
+\title{Enhanced estimation of the cancer proteome from transcriptome assays}
+
+
+\author{Angela}
+
+\maketitle
+Cancer phenotypes manifest at the level of proteins, but quantitative proteomics assays are not yet feasible in high throughput relative to transcriptome assays. Correlation between mRNA and protein levels is known to be modest, in part due to regulation by RNA-binding proteins (RBPs) and non-coding RNAs including microRNAs. These regulatory relationships have been catalogued computationally or experimentally, but have yet to be incorporated as a transcriptome-wide model of gene translation. This case study explores the possibility of building such a model from regulatory databases and experimental mRNA and protein abundance data from matched samples. Such a model could feasibly raise the utility of thousands of existing publicly available microarray and RNA-seq transcriptome experiments for the development of cancer prognostic predictors. This goal could be achieved through an added in silico step without incurring additional experimental costs. Furthermore, the identification of context-specific regulation of gene translation through the model selection process would contribute to understanding alterations of regulatory pathways in cancer and to drug design.  This case study leverages matched microarray and mass spectrometry-based experiments for the NCI-60 cell lines, and an RBP target database, to develop a statistical model of protein abundance estimated from mRNA abundance. 
+
+Vignette's code, .rda and .txt files are available at https://github.com/ar00/tmc
+
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{require}\hlstd{(GenomicRanges)}
+\hlkwd{require}\hlstd{(gplots)}
+\hlkwd{require}\hlstd{(hash)}
+\hlkwd{require}\hlstd{(nortest)}
+
+\hlkwd{load}\hlstd{(}\hlstr{"summarizedExperimentiBAQ.rda"}\hlstd{)}
+\hlkwd{load}\hlstd{(}\hlstr{"NCI60.annotation.rda"}\hlstd{)}
+\hlkwd{load}\hlstd{(}\hlstr{"CISBP-RNA.rda"}\hlstd{)}
+
+\hlcom{# binary matrix for presence/absence of bindng sites (Q-value<.20) for any RBP in NCI60 genes. }
+\hlcom{# Note that RBPs in this file might result undetected at protein level in NCI60.  }
+\hlstd{rbp.db}\hlkwb{=}\hlkwd{read.delim}\hlstd{(}\hlstr{'NCI60.rbp.target.binary.txt'}\hlstd{,}\hlkwc{header}\hlstd{=}\hlnum{TRUE}\hlstd{,}\hlkwc{as.is}\hlstd{=}\hlnum{TRUE}\hlstd{,}\hlkwc{sep}\hlstd{=}\hlstr{'\textbackslash{}t'}\hlstd{)}
+\hlcom{# goodness-of-fit measures for models using RBP protein/RNA levels}
+\hlstd{fr} \hlkwb{=} \hlkwd{read.table}\hlstd{(}\hlstr{'ridge.penalty.glmnet.rlm.max5nas.iBAQ.summary.by.rna.txt'}\hlstd{,}\hlkwc{sep}\hlstd{=}\hlstr{'\textbackslash{}t'}\hlstd{,}\hlkwc{as.is}\hlstd{=T,}\hlkwc{header}\hlstd{=T)}
+\hlstd{fp} \hlkwb{=} \hlkwd{read.table}\hlstd{(}\hlstr{'ridge.penalty.glmnet.rlm.max5nas.iBAQ.summary.txt'}\hlstd{,}\hlkwc{sep}\hlstd{=}\hlstr{'\textbackslash{}t'}\hlstd{,}\hlkwc{as.is}\hlstd{=T,}\hlkwc{header}\hlstd{=T)}
+\hlcom{# coefficients of regression models based in RBP protein abundances}
+\hlstd{coeff} \hlkwb{=} \hlkwd{read.table}\hlstd{(}\hlstr{'ridge.penalty.glmnet.rlm.max5nas.iBAQ.stability.txt'}\hlstd{,}\hlkwc{header}\hlstd{=T,}\hlkwc{sep}\hlstd{=}\hlstr{'\textbackslash{}t'}\hlstd{,}\hlkwc{as.is}\hlstd{=T)}
+\hlstd{fitfp} \hlkwb{=} \hlstr{'ridge.penalty.glmnet.rlm.max5nas.iBAQ.fitted.txt'}
+\hlstd{fitfr} \hlkwb{=} \hlstr{'ridge.penalty.glmnet.rlm.max5nas.iBAQ.fitted.by.rna.txt'}
+\hlkwd{source}\hlstd{(}\hlstr{'dx.plot.R'}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\maketitle
+
+The object of class SummerizedExpriment contains normalized gene expression profiles at RNA and protein levels across 59 cell lines of the NCI60 panel (log-10 scale).
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{prot} \hlkwb{=} \hlkwd{as.matrix}\hlstd{(}\hlkwd{assays}\hlstd{(sset)[[}\hlnum{2}\hlstd{]])}
+\hlstd{rna} \hlkwb{=} \hlkwd{as.matrix}\hlstd{(}\hlkwd{assays}\hlstd{(sset)[[}\hlnum{1}\hlstd{]])}
+\hlkwd{show}\hlstd{(rna[}\hlnum{1}\hlopt{:}\hlnum{5}\hlstd{,}\hlnum{1}\hlopt{:}\hlnum{5}\hlstd{])}
+\end{alltt}
+\begin{verbatim}
+##     BREAST_BT549 BREAST_HS578T BREAST_MCF7 BREAST_MCF7ADR BREAST_MDAMB231
+## ID1     3.058590      3.052328    3.005707       2.968685        3.157620
+## ID2     2.922308      2.500957    2.995548       3.029181        2.808274
+## ID3     2.222351      2.371245    2.251824       2.185191        2.724046
+## ID5     2.277097      2.381688    2.113162       2.092676        2.484485
+## ID6     1.615983      1.449195    2.698117       2.553821        1.696116
+\end{verbatim}
+\begin{alltt}
+\hlkwd{show}\hlstd{(prot[}\hlnum{1}\hlopt{:}\hlnum{5}\hlstd{,}\hlnum{1}\hlopt{:}\hlnum{5}\hlstd{])}
+\end{alltt}
+\begin{verbatim}
+##     BREAST_BT549 BREAST_HS578T BREAST_MCF7 BREAST_MCF7ADR BREAST_MDAMB231
+## ID1     4.568436            NA          NA       4.975772              NA
+## ID2     6.949653      6.341316    7.193598       6.810327        6.804283
+## ID3           NA      5.141230          NA             NA              NA
+## ID5     5.300073      4.626576    5.939434       6.347954        6.748514
+## ID6           NA            NA    6.530584       5.106463              NA
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+
+\maketitle
+
+Due to the high counts of invalid values per identifier (i.e. cell lines where protein was undetected) in NCI60 proteomics profiles, we retained the genes with at most five invalid values (Figure1).
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure2/minimal-figure_on_NCI60_dataset-1} 
+
+}
+
+
+
+\end{knitrout}
+
+% insert figure NCI60_valid_expr.pdf whose caption is: NCI60 transcriptome and proteome.
+
+
+\maketitle
+
+Since post-transcriptional control can be a biological reason of low concordance between RNA nad protein profiles, we assembled a database of inferred binding sites of RNA binding proteins on the untranslated regions, UTRs, of genes profiled at both levels of NCI60 (Figure2).
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure2/minimal-RBP_binding_sites_in_NCI60-1} 
+
+}
+
+
+
+\end{knitrout}
+
+% Insert figure NCI60_rbp.pdf whose caption is: Degree distribution of inferred regulatory network of RNA binding protein (RBP) bindomg sites in NCI60.
+
+
+\maketitle
+
+We built two models: a reduced model where the candidate predictor of protein abundance is the mRNA abundance, and a full model containing additional candidate predictors given by expression data for RBPs inferred to bind the mRNA UTRs. We standardized explanatory and response variables. We fitted the reduced model by robust linear regression and 
+the full model by ridge-penalty linear regression (glmnet R package). Three-fold cross-validation was used to learn regularization parameter to derive penalized coefficients of the models. Extra-sample prediction error, defined by root mean squared error (RMSE), was estimated by five-fold cross-validation. We compared the two models to assess whether and by how much the full model decreases prediction error of protein abundance, and to select informative RBPs.
+
+
+We built full models using either RNA or protein abundances of RBPs and found RBP protein data but not RBP RNA data are useful in the models to predict the proteome (Figure 3). 
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure2/minimal-comparison_of_models_based_on_RBP_protein_or_RNA_data-1} 
+
+}
+
+
+
+\end{knitrout}
+
+% insert figure cmp_models_by_rbp_rna_prot.pdf whose caption is: Full models including RBP protein abudances but not RBP RNA abundances decrease prediction error of the proteome.
+
+
+
+We show an example of gene, GPI, where the RMSE ratio of the model which uses RBP protein data is higher than the RMSE ratio of the model which uses RBP RNA data. 
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure2/minimal-example_of_RBP_RNA/protein-based_models_comparison_in_a_gene-1} 
+
+}
+
+
+
+\end{knitrout}
+
+% insert figure cmp_ID219_models_by_rbp_rna_prot whose caption is: Performance comparison between models using RBP protein or RNA abundances.
+
+\maketitle
+
+\textbf{Contribution to/from biocMultiAssay:} 
+Currently this analysis requires crossing several tables containing: 1) expression data at two levels, (2) gene/transcript/protein associations and corresponding attributes including gene coordinates, CDS, 5' and 3' UTR coordinates and external aliases (RefSeq,HGNC,SwissProt/UniProt and so on), (3) regulatory annotations including RBPs inferred to bind UTRs and RBP binding site attributes (coordinates, score, matched sequence).
+
+Crossing tables was time-consuming and error-prone. The whole flowchart might be streamlined by an initial effort to decorate the genes in the SummarizedExperiment object with data structures containing the aforementioned basic and regulatory attributes. 
+
+Also the association between gene, transcript and protein is not unique and it might be useful to be able to select the triplet (gene/transcript/protein) according to an attribute of interest such as the transcript with longest 5'(3') UTRor the transcript experimentally supported in RefeSeq. 
+
+\end{document}
+
+
